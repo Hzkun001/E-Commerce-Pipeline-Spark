@@ -23,13 +23,19 @@ Proyek ini merupakan implementasi **Enterprise Batch Data Pipeline** menggunakan
 - ✅ **Analytics KPIs** - Total revenue, top products, category analysis
 - ✅ **Logging System** - Monitoring dan tracking pipeline execution
 - ✅ **Performance Tracking** - Execution time measurement
+- ✅ **Streaming Pipeline** - Real-time processing dengan Spark Structured Streaming
+- ✅ **Transaction Generator** - Simulasi data transaksi real-time (JSON)
+- ✅ **Streamlit Dashboard** - Real-time analytics dashboard interaktif
 
 ---
 
 ## 🏗️ Arsitektur Data
 
 ```
-┌─────────────┐
+                    ┌──────────────────────┐
+                    │   Batch Pipeline     │
+                    └──────────────────────┘
+┌─────────────┐           │
 │  Raw Layer  │  ← CSV files (ecommerce_raw.csv)
 └──────┬──────┘
        │
@@ -45,8 +51,28 @@ Proyek ini merupakan implementasi **Enterprise Batch Data Pipeline** menggunakan
        │
        ▼
 ┌───────────────┐
-│ Serving Layer │  ← CSV exports untuk visualization/reporting
+│ Serving Layer │  ← CSV + Parquet untuk visualization/reporting
 └───────────────┘
+
+                    ┌──────────────────────┐
+                    │   Streaming Pipeline │
+                    └──────────────────────┘
+┌──────────────────┐       │
+│ Transaction      │ ← JSON files (stream_data/)
+│ Generator        │
+└──────┬───────────┘
+       │
+       ▼
+┌──────────────────┐
+│ Structured       │  ← Spark Streaming (micro-batch)
+│ Streaming        │
+└──────┬───────────┘
+       │
+       ▼
+┌──────────────────┐
+│ Streamlit        │  ← Real-time dashboard
+│ Dashboard        │
+└──────────────────┘
 ```
 
 ---
@@ -76,11 +102,21 @@ Proyek ini merupakan implementasi **Enterprise Batch Data Pipeline** menggunakan
 │
 ├── scripts/
 │   ├── batch_pipeline_enterprise.py  # Main ETL pipeline
-│   └── analytics_layer.py            # Analytics & KPI calculation
+│   ├── analytics_layer.py            # Analytics & KPI calculation
+│   ├── streaming_layer.py            # Spark Structured Streaming
+│   └── transaction_generator.py      # Real-time JSON data simulator
+│
+├── dashboard/
+│   └── dashboard_streamlit.py        # Streamlit real-time dashboard
+│
+├── stream_data/                # JSON transaksi real-time (generated)
+│   └── transaction_*.json
 │
 ├── logs/                       # Pipeline execution logs
-│   └── batch_pipeline.log
+│   ├── batch_pipeline.log
+│   └── stream_checkpoint/      # Spark streaming checkpoint
 │
+├── requirements.txt            # Python dependencies
 ├── venv/                       # Python virtual environment
 ├── .gitignore
 └── README.md
@@ -93,9 +129,11 @@ Proyek ini merupakan implementasi **Enterprise Batch Data Pipeline** menggunakan
 | Technology | Purpose |
 |------------|---------|
 | **Python 3.8+** | Bahasa pemrograman utama |
-| **Apache Spark (PySpark)** | Distributed data processing |
+| **Apache Spark (PySpark)** | Distributed batch & stream processing |
+| **Spark Structured Streaming** | Real-time data pipeline |
+| **Streamlit** | Real-time web dashboard |
 | **Parquet** | Columnar storage format |
-| **CSV** | Raw data & serving layer |
+| **CSV / JSON** | Raw data & serving layer |
 | **Logging** | Pipeline monitoring |
 
 ---
@@ -137,13 +175,13 @@ Pipeline ini menghasilkan beberapa Key Performance Indicators (KPIs):
 
 3. **Install dependencies**
    ```bash
-   pip install pyspark
-   pip install pandas  # optional, untuk data exploration
+   pip install -r requirements.txt
    ```
 
 4. **Verifikasi instalasi**
    ```bash
    python -c "import pyspark; print(pyspark.__version__)"
+   python -c "import streamlit; print(streamlit.__version__)"
    ```
 
 ---
@@ -176,6 +214,32 @@ python scripts/analytics_layer.py
 - CSV files di folder `data/serving/`
 - KPI summary di console
 - Ready untuk import ke Tableau/Power BI
+
+---
+
+### 3. Jalankan Streaming Pipeline (Real-Time)
+
+Pipeline ini memproses JSON transaksi yang masuk secara real-time:
+
+**Terminal 1 — Jalankan Transaction Generator:**
+```bash
+python scripts/transaction_generator.py
+```
+
+**Terminal 2 — Jalankan Spark Streaming:**
+```bash
+spark-submit scripts/streaming_layer.py
+```
+
+**Terminal 3 — Jalankan Streamlit Dashboard:**
+```bash
+streamlit run dashboard/dashboard_streamlit.py
+```
+
+**Output:**
+- JSON transaksi di folder `stream_data/` (generated setiap 3 detik)
+- Parquet hasil streaming di `data/serving/stream/`
+- Dashboard real-time di browser (default: `http://localhost:8501`)
 
 ---
 
@@ -259,6 +323,7 @@ Log berisi:
 
 Data di folder `data/serving/` dapat digunakan untuk:
 
+- **Streamlit Dashboard** - Real-time dashboard (built-in, lihat `dashboard/`)
 - **Tableau** - Import CSV files untuk dashboard
 - **Power BI** - Connect to CSV sources
 - **Excel** - Manual analysis
