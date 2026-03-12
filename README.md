@@ -378,14 +378,6 @@ Proyek ini dibuat untuk keperluan akademik - Big Data Course.
 
 ---
 
-## 👤 Author
-
-**Akhmad Hafidz Ardianto**  
-NIM: 230104040118  
-Universitas: [Nama Universitas]  
-Email: [email-anda]@[domain]
-
----
 
 ## 🙏 Acknowledgments
 
